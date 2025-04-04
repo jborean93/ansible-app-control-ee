@@ -1,3 +1,5 @@
-context
+collections/
+context/
+.vagrant/
 cert.pfx
 cert_pass

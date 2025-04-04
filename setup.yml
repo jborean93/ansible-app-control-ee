@@ -1,0 +1,37 @@
+- name: setup App Control
+  hosts: windows
+  gather_facts: false
+  tasks:
+  - name: generate password
+    ansible.builtin.set_fact:
+      cert_password: "{{ lookup('ansible.builtin.password', 'cert_pass') }}"
+    no_log: true
+
+  - name: setup certificates
+    ansible.windows.win_powershell:
+      script: '{{ lookup("ansible.builtin.file", "SetupCertificate.ps1") }}'
+      parameters:
+        CertPrefix: Ansible-AppControl
+      sensitive_parameters:
+      - name: CertPassword
+        value: '{{ cert_password }}'
+    become: true
+    become_method: runas
+    vars:
+      ansible_become_user: '{{ ansible_user }}'
+      ansible_become_password: '{{ ansible_password }}'
+    register: cert_result
+
+  - name: fetch certificate
+    ansible.builtin.fetch:
+      src: C:\Windows\TEMP\Ansible-AppControl.pfx
+      dest: cert.pfx
+      flat: true
+
+  - name: setup App Control policy
+    ansible.windows.win_powershell:
+      script: '{{ lookup("ansible.builtin.file", "SetupPolicy.ps1") }}'
+      parameters:
+        CertPath: C:\Windows\TEMP\Ansible-AppControl.cer
+        PolicyName: Ansible_AppControl_Test
+      creates: C:\Windows\System32\CodeIntegrity\SiPolicy.p7b

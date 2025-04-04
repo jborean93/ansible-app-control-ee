@@ -12,7 +12,7 @@ $ErrorActionPreference = 'Stop'
 
 . "$PSScriptRoot/New-AnsiblePowerShellSignature.ps1"
 
-$certPass = (Get-Content -LiteralPath $CertPassPath -Raw)
+$certPass = (Get-Content -LiteralPath $CertPassPath -Raw).Trim()
 $signParams = @{
     Certificate = [X509Certificate2]::new("$PSScriptRoot/cert.pfx", $certPass)
     Collection = 'ansible.builtin', 'ansible.windows', 'community.windows', 'microsoft.ad', 'microsoft.iis'
