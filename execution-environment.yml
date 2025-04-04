@@ -1,0 +1,49 @@
+version: 3
+
+dependencies:
+  ansible_core:
+    package_pip: https://github.com/jborean93/ansible/archive/refs/heads/app-control.tar.gz
+  ansible_runner:
+    package_pip: ansible-runner
+  galaxy:
+    collections:
+    # Contains changes needed for win_powershell to work
+    - name: git+https://github.com/jborean93/ansible.windows.git,wdac
+    - name: microsoft.ad
+    - name: microsoft.iis
+    - name: git+https://github.com/ansible-collections/community.windows.git,main
+  python:
+  - dnspython
+  - dpapi-ng[kerberos]
+  - pywinrm[kerberos,credssp]
+  - pypsrp[kerberos,credssp]
+  - sansldap
+  python_interpreter:
+    package_system: python3.11
+    python_path: /usr/bin/python3.11
+  system:
+  - gcc
+  - krb5-devel
+  - krb5-workstation
+  - python3.11-devel
+
+images:
+  base_image:
+    name: registry.access.redhat.com/ubi9/ubi:latest
+
+additional_build_files:
+- src: cert.pfx
+  dest: setup
+- src: scripts/*
+  dest: setup
+
+additional_build_steps:
+  # Remove once ansible.windows installs from Galaxy.
+  prepend_galaxy:
+  - RUN dnf -y install git
+  append_final:
+  - COPY _build/setup /tmp/setup
+  - RUN dnf -y install libicu && dnf clean all
+  - RUN /tmp/setup/install-pwsh.sh "7.4.7"
+  - RUN --mount=type=secret,id=PFX_PASS /tmp/setup/sign-content.ps1 /run/secrets/PFX_PASS
+  - RUN rm -rf /tmp/setup && rm -rf /opt/microsoft
