@@ -1,5 +1,7 @@
-collections/
-context/
 .vagrant/
-cert.pfx
-cert_pass
+.venv/
+collections/
+ee/context/
+ee/cert.pfx
+ee/cert_pass
+test/

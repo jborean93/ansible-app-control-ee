@@ -4,7 +4,7 @@
   tasks:
   - name: generate password
     ansible.builtin.set_fact:
-      cert_password: "{{ lookup('ansible.builtin.password', 'cert_pass') }}"
+      cert_password: "{{ lookup('ansible.builtin.password', playbook_dir ~ '/ee/cert_pass') }}"
     no_log: true
 
   - name: setup certificates
@@ -25,7 +25,7 @@
   - name: fetch certificate
     ansible.builtin.fetch:
       src: C:\Windows\TEMP\Ansible-AppControl.pfx
-      dest: cert.pfx
+      dest: '{{ playbook_dir }}/ee/cert.pfx'
       flat: true
 
   - name: setup App Control policy

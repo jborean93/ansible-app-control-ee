@@ -1,0 +1,39 @@
+- name: run App Control tests
+  hosts: windows
+  gather_facts: false
+  tasks:
+  - name: run collection module that has been signed
+    ansible.windows.win_ping:
+
+  - name: run library adjacent module that has been inline signed
+    ansible.legacy.module_signed:
+      input: café
+
+  - name: run library module that is unsigned
+    ansible.legacy.module_unsigned:
+      input: café
+
+  - name: run script that has been signed
+    ansible.builtin.script: script_signed.ps1 café
+
+  - name: run script that is unsigned
+    ansible.builtin.script: script_unsigned.ps1 café
+
+  - name: run signed content through win_powershell
+    ansible.windows.win_powershell:
+      # We must set rstrip=False to preserve the script signature integrity
+      script: '{{ lookup("ansible.builtin.file", "script_signed.ps1", rstrip=False) }}'
+      parameters:
+        Value: café
+        AsRaw: true
+
+  - name: run unsigned content through win_powershell
+    ansible.windows.win_powershell:
+      script: |
+        @{
+            language_mode = $ExecutionContext.SessionState.LanguageMode.ToString()
+            whoami = [Environment]::UserName
+            ünicode = $args[0]
+        }
+      parameters:
+        Value: café
