@@ -7,7 +7,7 @@ Some of the content and setup may change over time as we adjust the interface an
 Windows App Control, formerly known as Windows Defender Application Control (`WDAC`), is a security feature in Windows that can block all executables and scripts from running unless explicitly signed by a trusted publisher.
 When attempting to run Ansible against a host secured by WDAC it will fail with the following error:
 
-```json
+```
 $ ansible windows -m win_ping
 
 win | FAILED! => {
@@ -130,6 +130,19 @@ vagrant winrm --no-tty --command '[Console]::WriteLine("test")'
 # + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #     + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
 #     + FullyQualifiedErrorId : MethodInvocationNotSupportedInConstrainedLanguage
+
+uv run ansible windows -m ansible.windows.win_ping
+# win | FAILED! =>
+#     changed: false
+#     module_stderr: |-
+#         Cannot invoke method. Method invocation is supported only on core types in this language mode.
+#             + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+#             + FullyQualifiedErrorId : MethodInvocationNotSupportedInConstrainedLanguage
+#     module_stdout: ''
+#     msg: |-
+#         MODULE FAILURE: No start of json char found
+#         See stdout/stderr for the exact error
+#     rc: 1
 ```
 
 This setup is only designed for testing purposes, in a real environment you should be using a certificate issued by a proper authority, like Active Directory Certificate Services.
@@ -258,6 +271,14 @@ ok: [win] =>
     whoami: vagrant
     ünicode: café
 
+TASK [expect failure when running unsigned module with module_utils] *******************************************************************************************************************************
+An exception occurred during task execution. To see the full traceback, use -vvv. The error was: at <ScriptBlock>, <No file>: line 39
+fatal: [win]: FAILED! =>
+    changed: false
+    msg: 'failure during exec_wrapper: Cannot run untrusted PowerShell script ''ansible.modules.ansible.legacy.module_unsigned_with_util.ps1''
+        in ConstrainedLanguage mode with module util imports.'
+...ignoring
+
 TASK [run script that has been signed] *************************************************************************************************************************************************************
 changed: [win] =>
     changed: true
@@ -317,6 +338,27 @@ changed: [win] =>
     result: {}
     verbose: []
     warning: []
+
+TASK [run content through win_shell under CLM] *****************************************************************************************************************************************************
+changed: [win] =>
+    changed: true
+    cmd: |-
+        @{
+            language_mode = $ExecutionContext.SessionState.LanguageMode.ToString()
+            whoami = [Environment]::UserName
+        } | ConvertTo-Json
+    delta: '0:00:01.718758'
+    end: '2025-04-06 18:59:34.708183'
+    rc: 0
+    start: '2025-04-06 18:59:32.989425'
+    stderr: ''
+    stderr_lines: <omitted>
+    stdout: |-
+        {
+            "language_mode":  "ConstrainedLanguage",
+            "whoami":  "vagrant"
+        }
+    stdout_lines: <omitted>
 ```
 
 In this output we can see that:
@@ -326,7 +368,9 @@ In this output we can see that:
 + PowerShell scripts without any signature (or a signature that isn't trusted) will run in `ConstrainedLanguage` mode `CLM`
 + PowerShell modules with inline signatures will run in `FLM`
 + PowerShell modules without any signature (or a signature that isn't trusted) will run in `CLM`
++ PowerShell modules without any signature (or a signature that isn't trusted) with module util references will fail even if those utils are trusted
 + We can still use `ansible.windows.win_powershell` to run arbitrary scripts but the script is run in `FLM` vs `CLM` depending on whether it is signed or not
++ We can still use `ansible.windows.win_shell` (or `win_command`) but scripts are always run in `CLM` regardless of whether they are signed or not
 
 Any other module inside the 4 Ansible Windows collections inside the EE can also be run and tested with your own playbooks.
 The only exception right now is the `ansible.windows.win_updates` module which is not currently supported in App Control and will fail when attempting to do so

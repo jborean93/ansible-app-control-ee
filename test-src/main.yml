@@ -13,6 +13,10 @@
     ansible.legacy.module_unsigned:
       input: café
 
+  - name: expect failure when running unsigned module with module_utils
+    ansible.legacy.module_unsigned_with_util:
+    ignore_errors: true
+
   - name: run script that has been signed
     ansible.builtin.script: script_signed.ps1 café
 
@@ -37,3 +41,12 @@
         }
       parameters:
         Value: café
+
+  # win_shell always runs in CLM as it is a new process without invoking from
+  # the FS.
+  - name: run content through win_shell under CLM
+    ansible.windows.win_shell: |
+      @{
+          language_mode = $ExecutionContext.SessionState.LanguageMode.ToString()
+          whoami = [Environment]::UserName
+      } | ConvertTo-Json
