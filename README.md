@@ -24,6 +24,10 @@ These signed scripts will be invoked by Ansible in a specific way that works wit
 Using this repo, you can build an EE that contains the four main Windows collections, `ansible.windows`, `microsoft.ad`, `microsoft.iis`, and `community.windows`, which have been signed with a certificate trusted by the App Control policy on a target Windows host.
 
 ## Ansible Metadata
+
+> [!WARNING]
+> While Ansible's support for Windows App Control is a technical preview, the information in this section may change over time.
+
 There are two types of operations done by Ansible when it comes to verifying a signature for App Control:
 
 + Inline signatures - content contains Authenticode signature in the script itself
@@ -46,7 +50,7 @@ The format of the file is (subject to tech preview status):
             Hash = 'SHA256 hash of the win_ping module'
             # Trusted - Will run in FLM
             # Unsupported - Will error if host has App Control enabled
-            # Anything else or missing - Will run in CLM if host has App Control enabled
+            # Anything else will invalidate the file
             Mode = 'Trusted|Unsupported'
         }
         # Repeats for all other modules/module_utils
@@ -95,6 +99,10 @@ To try out Ansible and Windows App Control we will need the following:
 Once all three areas have been setup we can run our tests outline in [Testing Ansible and App Control](#testing-ansible-and-app-control).
 
 ### Environment Setup
+
+> [!WARNING]
+> This setup uses an unsigned policy, it is highly recommended to sign your policies as it is trivial to remove an unsigned policy on a Windows host
+
 This section will go over how to setup a Windows environment with an App Control policy applied and a `.pfx` file we can use when building the EE.
 You can skip this section if you have your own environment and certificate to use or wish to set it up manually.
 
@@ -149,6 +157,14 @@ This setup is only designed for testing purposes, in a real environment you shou
 You should also look at using supplemental policies and using tools like the [WDAC Wizard](https://webapp-wdac-wizard.azurewebsites.net) to craft policies specific to your environment and signing the policy binaries.
 To cleanup the environment, run `vagrant destroy` and it will shut down the VM and removeand files it created.
 If you wish to remove the App Control policy you need to delete the file at `C:\Windows\System32\CodeIntegrity\SiPolicy.p7b` and reboot the Windows host.
+The same thing can be achieved through this `vagrant` command.
+
+```bash
+vagrant winrm --no-tty --command 'Remove-Item C:\Windows\System32\CodeIntegrity\SiPolicy.p7b -Force; shutdown.exe /r /t 5'
+```
+
+> [!NOTE]
+> Using a signed App Control policy with Secure Boot will ensure that the policy file cannot be removed as easily as the above command.
 
 ### Build Execution Environment
 To build the EE you will need to ensure the `.pfx` and password for that PFX are in `ee/cert.pfx` and `ee/cert_pass` respectively.
