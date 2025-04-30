@@ -31,19 +31,18 @@ Using this repo, you can build an EE that contains the four main Windows collect
 There are two types of operations done by Ansible when it comes to verifying a signature for App Control:
 
 + Inline signatures - content contains Authenticode signature in the script itself
-+ Collection `meta/powershell_signatures.ps1` metadata script
++ Collection `meta/powershell_signatures.psd1` metadata script
 
 Any content not included in a collection (playbook `library/` modules, script files, etc) must use the inline signature format.
-The signature is verified at runtime when Ansible attempts to run any content that is not included in the `powershell_signatures.ps1` hash list.
+The signature is verified at runtime when Ansible attempts to run any content that is not included in the `powershell_signatures.psd1` hash list.
 
-The second format is the PowerShell script in a collection under `${COLLECTION_ROOT}/meta/powershell_signatures.ps1`.
-This PowerShell script is signed with an inline signature and it contains the SHA256 hash and runtime mode of the collections content.
+The second format is the PowerShell manifest in a collection under `${COLLECTION_ROOT}/meta/powershell_signatures.psd1`.
+This PowerShell manifest is signed with an inline signature and it contains the SHA256 hash and runtime mode of the collections content.
 The format of the file is (subject to tech preview status):
 
 ```powershell
-#AnsibleVersion 1
-
 @{
+    Version = 1
     HashList = @(
         # ansible.windows.win_ping.ps1
         @{
@@ -64,7 +63,7 @@ The format of the file is (subject to tech preview status):
 # SIG # End signature block
 ```
 
-Ansible will first verify the inline Authenticode signature or the `powershell_signatures.ps1` is trusted by the App Control policy of the Windows host, if it is not then it is ignored.
+Ansible will first verify the inline Authenticode signature or the `powershell_signatures.psd1` is trusted by the App Control policy of the Windows host, if it is not then it is ignored.
 Any incoming script will verify whether the SHA256 of itself (encoded as UTF-8 bytes) is contained in any of the provided collection's `HashList`.
 
 The [New-AnsiblePowerShellSignature](ee/scripts/New-AnsiblePowerShellSignature.ps1) function can be used to sign both the `exec_wrapper.ps1` inside Ansible and any collections you provide to it.
@@ -240,14 +239,13 @@ podman run \
     windows-app-control-ee
 ```
 
-We can verify that our collections has been signed by verifying the files at `/usr/share/ansible/collections/ansible_collections/${NAMESPACE}/${NAME}/meta/powershell_signatures.ps1` contain the Authenticode signature footer like so:
+We can verify that our collections has been signed by verifying the files at `/usr/share/ansible/collections/ansible_collections/${NAMESPACE}/${NAME}/meta/powershell_signatures.psd1` contain the Authenticode signature footer like so:
 
 ```
-cat /usr/share/ansible/collections/ansible_collections/ansible/windows/meta/powershell_signatures.ps1
-
-#AnsibleVersion 1
+cat /usr/share/ansible/collections/ansible_collections/ansible/windows/meta/powershell_signatures.psd1
 
 @{
+    Version = 1
     HashList = @(
         ...
     )

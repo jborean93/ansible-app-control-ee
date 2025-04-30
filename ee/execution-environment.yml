@@ -12,8 +12,7 @@ dependencies:
     - name: git+https://github.com/jborean93/ansible.windows.git,wdac
     - name: microsoft.ad
     - name: microsoft.iis
-    # Works with v3.0.0 of ansible.windows, use proper name once merged and in release.
-    - name: git+https://github.com/ansible-collections/community.windows.git,main
+    - name: community.windows
   python:
   - dnspython
   - dpapi-ng[kerberos]
