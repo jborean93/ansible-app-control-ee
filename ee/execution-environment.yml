@@ -2,14 +2,14 @@ version: 3
 
 dependencies:
   ansible_core:
-    package_pip: https://github.com/jborean93/ansible/archive/refs/heads/app-control.tar.gz
+    package_pip: https://github.com/ansible/ansible/archive/refs/heads/devel.tar.gz
   ansible_runner:
     package_pip: ansible-runner
   galaxy:
     collections:
     # Contains changes needed for win_powershell/win_shell to work.
-    # Use proper name once merged and in release.
-    - name: git+https://github.com/jborean93/ansible.windows.git,wdac
+    # Use normal dep with 3.1.0 requirement once released.
+    - name: git+https://github.com/ansible-collections/ansible.windows.git,main
     - name: microsoft.ad
     - name: microsoft.iis
     - name: community.windows
@@ -45,6 +45,6 @@ additional_build_steps:
   append_final:
   - COPY _build/setup /tmp/setup
   - RUN dnf -y install libicu && dnf clean all
-  - RUN /tmp/setup/install-pwsh.sh "7.4.7"
+  - RUN /tmp/setup/install-pwsh.sh "7.4.10"
   - RUN --mount=type=secret,id=PFX_PASS /tmp/setup/sign-content.ps1 /run/secrets/PFX_PASS
   - RUN rm -rf /tmp/setup && rm -rf /opt/microsoft

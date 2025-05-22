@@ -1,7 +1,6 @@
-#!/usr/bin/env pwsh
-
 # 0.5.0 fixed BOM-less encoding issues with Unicode
 #Requires -Modules @{ ModuleName = 'OpenAuthenticode'; ModuleVersion = '0.5.0' }
+#Requires -Version 7.4
 
 using namespace System.Collections.Generic
 using namespace System.IO
@@ -59,7 +58,7 @@ Function New-AnsiblePowerShellSignature {
 
     .PARAMETER Unsupported
     A list of plugins to be marked as unsupported in the manifest and will
-    error when being run. List -Skip, the values here are the fully qualified
+    error when being run. Like -Skip, the values here are the fully qualified
     name of the plugin as referenced in Ansible.
 
     .PARAMETER TimeStampServer
@@ -136,10 +135,22 @@ Function New-AnsiblePowerShellSignature {
     )
 
     begin {
-        $ErrorActionPreference = 'Stop'
+        $backupEnv = @{
+            ANSIBLE_VERBOSITY = $env:ANSIBLE_VERBOSITY
+            ANSIBLE_DEVEL_WARNING = $env:ANSIBLE_DEVEL_WARNING
+            ANSIBLE_INVENTORY_UNPARSED_WARNING = $env:ANSIBLE_INVENTORY_UNPARSED_WARNING
+            ANSIBLE_NOCOLOR = $env:ANSIBLE_NOCOLOR
+        }
+
+        $Unsupported = @(
+            $Unsupported
+
+            # Known to not work, requires more changes to both Ansible and
+            # win_updates to support so we hardcode this as unsupported.
+            'ansible.windows.win_updates'
+        )
 
         Write-Verbose "Attempting to get ansible-config dump"
-
         $env:ANSIBLE_VERBOSITY = "0"
         $env:ANSIBLE_DEVEL_WARNING = "false"
         $env:ANSIBLE_INVENTORY_UNPARSED_WARNING = "false"
@@ -381,6 +392,12 @@ Function New-AnsiblePowerShellSignature {
                 $PSCmdlet.WriteError($_)
                 continue
             }
+        }
+    }
+
+    clean {
+        foreach ($e in $backupEnv.GetEnumerator()) {
+            Set-Item -Path "env:$($e.Key)" -Value $e.Value
         }
     }
 }

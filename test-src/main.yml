@@ -25,8 +25,7 @@
 
   - name: run signed content through win_powershell
     ansible.windows.win_powershell:
-      # We must set rstrip=False to preserve the script signature integrity
-      script: '{{ lookup("ansible.builtin.file", "script_signed.ps1", rstrip=False) }}'
+      path: script_signed.ps1
       parameters:
         Value: café
         AsRaw: true
