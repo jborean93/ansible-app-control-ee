@@ -3,6 +3,8 @@ This is an example of how you can build an Ansible Execution Environment (`EE`) 
 Support for Windows App Control is being added in the Ansible 2.19 release as a tech preview.
 Some of the content and setup may change over time as we adjust the interface and how Ansible interacts with App Control.
 
+A video demo of this feature can be found at https://www.youtube.com/watch?v=lO5Ft3rjdDw.
+
 ## Background
 Windows App Control, formerly known as Windows Defender Application Control (`WDAC`), is a security feature in Windows that can block all executables and scripts from running unless explicitly signed by a trusted publisher.
 When attempting to run Ansible against a host secured by WDAC it will fail with the following error:
